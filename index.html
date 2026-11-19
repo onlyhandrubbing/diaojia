@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>掉價中｜越等越便宜，但可能被搶走</title>
+<meta name="description" content="二手好物每 10 分鐘自動降價，誰先按「我要了」就用當下價格帶走。任何人都能上架自己用不到的東西。">
+<meta property="og:title" content="掉價中｜越等越便宜，但可能被搶走">
+<meta property="og:description" content="每件東西一直降價，先按先得。你敢等嗎？">
+<meta property="og:image" content="https://onlyhandrubbing.github.io/diaojia/og.png">
+<meta property="og:url" content="https://onlyhandrubbing.github.io/diaojia/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Barlow+Condensed:wght@600;700;800&display=swap">
+<style>
+/* A flea-market price board: chalk-white paper, black type, one hot red for the falling price. */
+:root{
+  --bg:#f3f1ec; --card:#fff; --ink:#151515; --muted:#6f6c66; --line:#dedad2; --soft:#ebe8e1;
+  --hot:#e23d1f; --hot-soft:#fde6df; --ok:#1d7a4c;
+  --num:"Barlow Condensed","Noto Sans TC",sans-serif;
+  --sans:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121212; --card:#1c1c1c; --ink:#f0eee9; --muted:#a29f98; --line:#33312e; --soft:#262523; --hot:#ff6a4a; --hot-soft:#3a1d16; --ok:#5cc48d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121212; --card:#1c1c1c; --ink:#f0eee9; --muted:#a29f98; --line:#33312e; --soft:#262523; --hot:#ff6a4a; --hot-soft:#3a1d16; --ok:#5cc48d; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:54px}
+.logo{display:flex;align-items:baseline;gap:6px;text-decoration:none;font-weight:900;font-size:20px;letter-spacing:.02em}
+.logo i{font-style:normal;color:var(--hot);font-family:var(--num);font-size:22px;transform:translateY(1px);display:inline-block}
+nav{display:flex;gap:4px}
+nav a{text-decoration:none;font-size:14px;font-weight:700;padding:6px 10px;border-radius:999px}
+nav a.on{background:var(--ink);color:var(--bg)}
+nav a.sell{background:var(--hot);color:#fff}
+main{padding-block:18px 80px}
+.demo{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--muted);margin-bottom:16px}
+.hero h1{margin:6px 0 0;font-size:clamp(28px,8vw,38px);font-weight:900;line-height:1.2}
+.hero p{margin:8px 0 0;color:var(--muted)}
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:30px 0 10px}
+.sec h2{margin:0;font-size:18px;font-weight:900}
+.sec small{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{display:block;text-decoration:none;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line);position:relative}
+.tile .ph{aspect-ratio:1;background:var(--soft);overflow:hidden}
+.tile .ph img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .6s}
+.tile .b{padding:8px 10px 10px}
+.tile h3{margin:0;font-size:14.5px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile .p{display:flex;align-items:baseline;gap:6px;margin-top:4px}
+.price{font-family:var(--num);font-weight:800;color:var(--hot);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.tile .price{font-size:26px;line-height:1}
+.was{font-size:12.5px;color:var(--muted);text-decoration:line-through}
+.tile .t{font-size:12px;color:var(--muted);margin-top:2px}
+.badge{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--bg);font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:4px}
+.badge.hot{background:var(--hot);color:#fff}
+.sold .ph img{filter:grayscale(1) opacity(.6)}
+.sold .price{color:var(--muted)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:12px}
+/* item */
+.back{display:inline-block;margin-bottom:10px;text-decoration:none;color:var(--muted);font-size:14px}
+.gal{border-radius:14px;overflow:hidden;background:var(--soft);aspect-ratio:1;position:relative}
+.gal img{width:100%;height:100%;object-fit:cover;display:block;transition:filter 1s}
+.gal .thumbs{position:absolute;bottom:8px;left:8px;display:flex;gap:6px}
+.gal .thumbs button{width:10px;height:10px;border-radius:50%;border:0;background:rgba(255,255,255,.55);padding:0;cursor:pointer}
+.gal .thumbs button[aria-pressed="true"]{background:#fff}
+.blurnote{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:2px 8px;border-radius:4px}
+.item h1{margin:14px 0 0;font-size:22px;font-weight:900;line-height:1.35}
+.meta{color:var(--muted);font-size:13.5px;margin-top:2px}
+.board{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.board .row1{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.board .now{font-size:13px;color:var(--muted)}
+.board .price{font-size:64px;line-height:.95;display:block}
+.board .price.tick{animation:tick .5s ease-out}
+@keyframes tick{from{transform:translateY(-6px);opacity:.3}to{transform:none;opacity:1}}
+.board .next{text-align:right;font-size:13px;color:var(--muted)}
+.board .next b{display:block;font-family:var(--num);font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:6px;background:var(--soft);border-radius:3px;margin-top:14px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--hot);border-radius:3px;transition:width .6s}
+.legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+.live{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+.live b{color:var(--ink)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--hot);margin-right:5px;vertical-align:1px;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.grab{margin-top:14px;width:100%;border:0;border-radius:12px;background:var(--hot);color:#fff;font-weight:900;font-size:19px;padding:16px;cursor:pointer;letter-spacing:.04em}
+.grab:disabled{background:var(--soft);color:var(--muted);cursor:default}
+.board .grab .price{display:inline;color:#fff;font-size:26px;margin-left:8px;line-height:1}
+.story{margin-top:18px;background:var(--card);border-left:3px solid var(--hot);padding:12px 14px;border-radius:0 10px 10px 0}
+.story span{display:block;font-size:12px;color:var(--muted);letter-spacing:.08em}
+.facts{margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0}
+.aff{margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;text-decoration:none}
+.aff b{color:var(--hot)}
+.tools{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{border:1.5px solid var(--ink);background:transparent;border-radius:999px;padding:8px 16px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.btn.ghost{border-color:var(--line);color:var(--muted);font-weight:500}
+/* forms */
+.form{display:grid;gap:16px}
+.f label{display:block;font-weight:700;font-size:14.5px;margin-bottom:6px}
+.f small{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}
+.f input,.f textarea,.f select{width:100%;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px}
+.f textarea{min-height:84px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos .add{width:92px;height:92px;border:1.5px dashed var(--muted);border-radius:10px;display:grid;place-items:center;color:var(--muted);cursor:pointer;font-size:13px;text-align:center;background:transparent}
+.photos .pv{width:92px;height:92px;border-radius:10px;overflow:hidden;position:relative}
+.photos .pv img{width:100%;height:100%;object-fit:cover}
+.photos .pv button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:1}
+.preview{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.preview b{font-family:var(--num);font-size:20px;color:var(--hot)}
+.rules{font-size:13px;color:var(--muted);background:var(--soft);border-radius:10px;padding:10px 12px}
+.rules ul{margin:4px 0 0;padding-left:18px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.check input{width:auto;margin-top:5px}
+.submit{width:100%;border:0;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:900;font-size:17px;padding:15px;cursor:pointer}
+.submit:disabled{opacity:.5}
+/* me */
+.mine{display:grid;gap:10px}
+.mi{display:grid;grid-template-columns:64px 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+.mi img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:var(--soft)}
+.mi h3{margin:0;font-size:15px}
+.mi p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+.mi .ct{color:var(--ink);font-weight:700;word-break:break-all}
+.mi .tools{margin-top:6px}
+/* dialog */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;background:var(--card);border-radius:18px 18px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px));display:grid;gap:12px;max-height:90vh;overflow:auto}
+.sheet h3{margin:0;font-size:20px;font-weight:900}
+.sheet .big{font-family:var(--num);font-size:48px;color:var(--hot);font-weight:800;line-height:1}
+.got{background:var(--hot-soft);border-radius:12px;padding:14px}
+.got b{word-break:break-all}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;font-size:14px;z-index:60;max-width:calc(100% - 32px);text-align:center}
+.feed{display:grid;gap:6px;font-size:14px}
+.feed div{display:flex;justify-content:space-between;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.feed .price{font-size:20px}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.how div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;color:var(--muted)}
+.how b{display:block;color:var(--ink);font-size:14.5px}
+.fine{margin-top:36px;font-size:12px;color:var(--muted);line-height:1.8}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="#/"><span>掉價中</span><i>↓</i></a>
+  <nav><a href="#/" data-r="home">逛逛</a><a href="#/me" data-r="me">我的</a><a href="#/sell" data-r="sell" class="sell">上架</a></nav>
+</div></header>
+<main class="wrap" id="view"></main>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+/* ---------- config: fill SUPA to go live; empty = demo mode in this browser ---------- */
+const SUPA={url:'',key:''};
+const SITE='https://onlyhandrubbing.github.io/diaojia/';
+const AFF={id:'16301320039',sub:'diaojia'};
+const shopee=kw=>'https://s.shopee.tw/an_redir?origin_link='+encodeURIComponent('https://shopee.tw/search?keyword='+encodeURIComponent(kw))+'&affiliate_id='+AFF.id+'&sub_id='+AFF.sub;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'$'+Math.round(n).toLocaleString();
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let tt;function toast(s){$('#toast').textContent=s;$('#toast').hidden=false;clearTimeout(tt);tt=setTimeout(()=>$('#toast').hidden=true,2600)}
+const MIN=60000;
+/* price everyone sees between server refreshes (floor unknown to the client: server says at_floor) */
+const priceAt=(it,t=Date.now())=>Math.max(it._floor??1,it.start_price-it.step*Math.max(0,Math.floor((t-Date.parse(it.start_at))/MIN/it.interval_min)));
+const nextDropIn=(it,t=Date.now())=>{const e=t-Date.parse(it.start_at);if(e<0)return Date.parse(it.start_at)-t;const iv=it.interval_min*MIN;return iv-(e%iv)};
+const fmtLeft=ms=>{const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`};
+const ago=t=>{const m=Math.round((Date.now()-Date.parse(t))/MIN);return m<1?'剛剛':m<60?m+' 分鐘前':m<1440?Math.round(m/60)+' 小時前':Math.round(m/1440)+' 天前'};
+
+/* ---------- placeholder photos for demo ---------- */
+function ph(label,hue){const c=document.createElement('canvas');c.width=c.height=600;const g=c.getContext('2d');
+  g.fillStyle=`hsl(${hue} 30% 82%)`;g.fillRect(0,0,600,600);g.fillStyle=`hsl(${hue} 25% 62%)`;g.fillRect(90,140,420,320);
+  g.fillStyle=`hsl(${hue} 30% 30%)`;g.font='700 46px "Noto Sans TC",sans-serif';g.textAlign='center';g.fillText(label,300,318);return c.toDataURL('image/jpeg',.8)}
+
+/* ---------- backend: Supabase or local demo ---------- */
+let api;
+if(SUPA.url){
+  const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm');
+  const sb=createClient(SUPA.url,SUPA.key);
+  const ensure=async()=>{const{data}=await sb.auth.getSession();if(data.session)return data.session.user.id;const r=await sb.auth.signInAnonymously();if(r.error)throw r.error;return r.data.user.id};
+  const err=e=>{const m=String(e?.message||e);return /gone/.test(m)?'gone':/limit/.test(m)?'limit':/own/.test(m)?'own':/early/.test(m)?'early':/too_many/.test(m)?'too_many':m};
+  api={
+    live:true,
+    async list(){const[{data:items,error},{data:pr}]=await Promise.all([sb.from('items').select('*').neq('status','removed').order('created_at',{ascending:false}).limit(120),sb.rpc('prices')]);if(error)throw error;
+      const m=new Map((pr||[]).map(p=>[p.id,p]));return items.map(it=>{const p=m.get(it.id);if(p){it._price=p.price;it._atFloor=p.at_floor;if(p.at_floor)it._floor=p.price}return it})},
+    async create(f,files){const uid=await ensure();const urls=[];for(const[i,b]of files.entries()){const path=`${uid}/${Date.now()}_${i}.jpg`;const r=await sb.storage.from('photos').upload(path,b,{contentType:'image/jpeg'});if(r.error)throw r.error;urls.push(sb.storage.from('photos').getPublicUrl(path).data.publicUrl)}
+      const{data,error}=await sb.rpc('create_item',{...f,photos:urls});if(error)throw new Error(err(error));return data},
+    async claim(id,name,contact){await ensure();const{data,error}=await sb.rpc('claim',{item:id,name,contact});if(error)throw new Error(err(error));return data[0]},
+    async mine(){await ensure();const{data,error}=await sb.rpc('my_items');if(error)throw error;return data},
+    async relist(id){const{error}=await sb.rpc('relist',{item:id});if(error)throw error},
+    async remove(id){const{error}=await sb.rpc('remove_item',{item:id});if(error)throw error},
+    async report(id){await ensure();await sb.rpc('report',{item:id})},
+    watch(cb){sb.channel('items').on('postgres_changes',{event:'*',schema:'public',table:'items'},cb).subscribe()},
+    presence(id,cb){const ch=sb.channel('room:'+id,{config:{presence:{key:crypto.randomUUID()}}});ch.on('presence',{event:'sync'},()=>cb(Object.keys(ch.presenceState()).length)).subscribe(s=>{if(s==='SUBSCRIBED')ch.track({at:Date.now()})});return()=>sb.removeChannel(ch)}
+  };
+}else{
+  const me=LS.get('dj_me',null)||(()=>{const v='me-'+Math.random().toString(36).slice(2,8);LS.set('dj_me',v);return v})();
+  const seed=()=>{const now=Date.now(),mk=(t,story,cond,np,sp,fl,iv,hrs,offMin,hue,label,area)=>{const steps=Math.max(1,Math.floor(hrs*60/iv));return{id:'d'+Math.random().toString(36).slice(2,9),seller:'demo',title:t,story,cond,new_price:np,start_price:sp,step:Math.max(1,Math.ceil((sp-fl)/steps)),interval_min:iv,start_at:new Date(now-offMin*MIN).toISOString(),end_at:new Date(now-offMin*MIN+hrs*3600000).toISOString(),photos:[ph(label,hue)],area,ship:'賣貨便',status:'live',_fl:fl,_contact:'LINE: demo_seller',created_at:new Date(now-offMin*MIN).toISOString()}};
+    return[mk('AirPods Pro 第二代','抽獎抽到的，但我已經有一副了。只拆過一次試戴。','近全新',7490,5200,2600,10,24,190,210,'耳機','台北'),
+      mk('任天堂 Switch 健身環','買的時候說要每天運動，實際用了三次。','良好',2390,1600,500,10,12,95,140,'健身環','新北'),
+      mk('IKEA 落地燈','搬家後新家燈夠亮了，放著佔位置。','良好',1299,700,150,30,24,300,40,'落地燈','台中'),
+      mk('前任送的香水 50ml','味道很好聞，但聞到會想到他。用掉大概 1/5。','使用過',3800,1800,300,10,6,20,330,'香水','台北'),
+      mk('Kindle Paperwhite','改用手機看書了，螢幕無刮傷。','良好',4290,2800,900,30,48,-90,90,'Kindle','高雄'),
+      {...mk('膠囊咖啡機','公司有了，家裡這台用不到。','良好',3990,2200,600,10,12,400,20,'咖啡機','台北'),status:'sold',sold_price:1180,sold_at:new Date(now-25*MIN).toISOString()}]};
+  let db=LS.get('dj_db',null);if(!db){db=seed();LS.set('dj_db',db)}
+  const save=()=>LS.set('dj_db',db);
+  const floorPrice=it=>Math.max(it._fl,it.start_price-it.step*Math.max(0,Math.floor((Date.now()-Date.parse(it.start_at))/MIN/it.interval_min)));
+  api={live:false,me,
+    async list(){return db.filter(i=>i.status!=='removed').map(i=>{const p=floorPrice(i);const o={...i,_price:p,_atFloor:p<=i._fl};if(o._atFloor)o._floor=p;return o})},
+    async create(f,files){const urls=[];for(const b of files)urls.push(await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(b)}));
+      if(db.filter(i=>i.seller===me&&i.status==='live').length>=5)throw new Error('too_many');
+      const steps=Math.max(1,Math.floor(f.hours*60/f.interval_min));const it={id:'u'+Date.now().toString(36),seller:me,title:f.title,story:f.story,cond:f.cond,new_price:f.new_price,start_price:f.start_price,step:Math.max(1,Math.ceil((f.start_price-f.floor_price)/steps)),interval_min:f.interval_min,start_at:f.start_at,end_at:new Date(Date.parse(f.start_at)+f.hours*3600000).toISOString(),photos:urls,area:f.area,ship:f.ship,status:'live',_fl:f.floor_price,_contact:f.seller_contact,created_at:new Date().toISOString()};
+      db.unshift(it);save();return it.id},
+    async claim(id,name,contact){const it=db.find(i=>i.id===id);if(!it||it.status!=='live')throw new Error('gone');if(it.seller===me)throw new Error('own');if(Date.now()<Date.parse(it.start_at))throw new Error('early');
+      const p=floorPrice(it);Object.assign(it,{status:'sold',sold_price:p,sold_at:new Date().toISOString(),buyer:me,_bname:name,_bcontact:contact});save();return{price:p,seller_contact:it._contact,ship:it.ship}},
+    async mine(){return db.filter(i=>i.seller===me||i.buyer===me).map(i=>({id:i.id,title:i.title,status:i.status,start_price:i.start_price,floor_price:i.seller===me?i._fl:null,sold_price:i.sold_price,sold_at:i.sold_at,role:i.seller===me?'sell':'buy',other_name:i.seller===me?i._bname:null,other_contact:i.seller===me?i._bcontact:i._contact,photos:i.photos}))},
+    async relist(id){const it=db.find(i=>i.id===id&&i.seller===me);if(!it)return;const d=Date.parse(it.end_at)-Date.parse(it.start_at);Object.assign(it,{status:'live',buyer:null,sold_price:null,sold_at:null,start_at:new Date().toISOString(),end_at:new Date(Date.now()+d).toISOString()});save()},
+    async remove(id){const it=db.find(i=>i.id===id&&i.seller===me);if(it){it.status='removed';save()}},
+    async report(){},
+    watch(){},presence(){return()=>{}}
+  };
+}
+
+/* ---------- state + router ---------- */
+let items=[],stopRoom=()=>{},timer=null;
+async function refresh(){try{items=await api.list()}catch(e){console.error(e);toast('讀取失敗，稍後再試')}}
+api.watch(async()=>{await refresh();render()});
+setInterval(async()=>{await refresh();if(!document.querySelector('.f'))render()},60000);
+window.addEventListener('hashchange',render);
+function route(){const h=location.hash.slice(1)||'/';const m=h.match(/^\/i\/(.+)$/);return m?{r:'item',id:m[1]}:{r:h==='/sell'?'sell':h==='/me'?'me':'home'}}
+function render(){stopRoom();stopRoom=()=>{};clearInterval(timer);const r=route();
+  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r.r&&r.r!=='sell'));
+  if(r.r==='item')return viewItem(r.id);if(r.r==='sell')return viewSell();if(r.r==='me')return viewMe();viewHome()}
+const demoNote=()=>api.live?'':'<div class="demo">示範模式：資料只存在你這台瀏覽器，用來看流程。正式上線後大家看到的是同一份。</div>';
+const cover=it=>it.photos?.[0]||ph(it.title.slice(0,4),200);
+const blurOf=it=>{const tot=Date.parse(it.end_at)-Date.parse(it.start_at),el=Date.now()-Date.parse(it.start_at);return it.status!=='live'?0:Math.max(0,Math.round(6*(1-Math.min(1,Math.max(0,el/tot)))))};
+
+/* ---------- home ---------- */
+function tile(it){const live=it.status==='live',early=live&&Date.now()<Date.parse(it.start_at),p=live?(it._price??priceAt(it)):it.sold_price;
+  const badge=!live?`<span class="badge">${money(it.sold_price)} 被搶走</span>`:early?`<span class="badge">${new Date(it.start_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} 開賣</span>`:it._atFloor?'<span class="badge hot">已到底價</span>':'';
+  return`<a class="tile ${live?'':'sold'}" href="#/i/${it.id}"><div class="ph"><img src="${esc(cover(it))}" alt="" loading="lazy" style="filter:blur(${early?7:blurOf(it)}px)"></div>${badge}<div class="b"><h3>${esc(it.title)}</h3><div class="p"><span class="price" data-pid="${it.id}">${money(early?it.start_price:p)}</span>${it.new_price?`<span class="was">${money(it.new_price)}</span>`:''}</div><div class="t" data-tid="${it.id}">${live&&!early&&!it._atFloor?'下次降價 '+fmtLeft(nextDropIn(it)):live&&early?'開賣價':ago(it.sold_at)}</div></div></a>`}
+function viewHome(){const now=Date.now(),live=items.filter(i=>i.status==='live'&&Date.parse(i.start_at)<=now),soon=items.filter(i=>i.status==='live'&&Date.parse(i.start_at)>now),sold=items.filter(i=>i.status==='sold').sort((a,b)=>Date.parse(b.sold_at)-Date.parse(a.sold_at)).slice(0,8);
+  $('#view').innerHTML=`${demoNote()}<div class="hero"><h1>越等越便宜，<br>但可能被搶走。</h1><p>每件東西時間一到就自動降價，誰先按「我要了」就用當下的價格帶走。</p>
+  <div class="how"><div><b>一直掉價</b>每 10～60 分鐘降一次</div><div><b>先按先得</b>一按就結束，沒有第二次</div><div><b>照片會變清楚</b>越接近結束越看得清</div></div></div>
+  <div class="sec"><h2>正在掉價</h2><small>${live.length} 件</small></div>${live.length?`<div class="grid">${live.map(tile).join('')}</div>`:'<div class="empty">現在沒有在掉價的東西。<br><a href="#/sell">上架一件</a>，你就是第一個。</div>'}
+  ${soon.length?`<div class="sec"><h2>即將開賣</h2><small>先看好</small></div><div class="grid">${soon.map(tile).join('')}</div>`:''}
+  ${sold.length?`<div class="sec"><h2>剛被搶走</h2><small>別人用多少帶走</small></div><div class="feed">${sold.map(i=>`<div><span>${esc(i.title)}<br><small style="color:var(--muted)">${ago(i.sold_at)}・開價 ${money(i.start_price)}</small></span><span class="price">${money(i.sold_price)}</span></div>`).join('')}</div>`:''}
+  <p class="fine">掉價中只提供上架和配對，不經手金流。買賣雙方自行用 7-11 賣貨便或面交完成交易，請注意交易安全，不要先匯款給不認識的人。商品旁的「蝦皮新品價」為推薦連結，透過連結購買站長可能獲得分潤。</p>`;
+  timer=setInterval(()=>{for(const it of live){const p=document.querySelector(`[data-pid="${it.id}"]`),t=document.querySelector(`[data-tid="${it.id}"]`);if(!p)continue;if(!it._atFloor){const np=Math.max(it._floor??1,priceAt(it));p.textContent=money(np);if(t)t.textContent='下次降價 '+fmtLeft(nextDropIn(it))}}},1000)}
+
+/* ---------- item ---------- */
+function viewItem(id){const it=items.find(i=>i.id===id);if(!it){$('#view').innerHTML='<a class="back" href="#/">← 回去逛</a><div class="empty">找不到這件，可能已經下架了。</div>';return}
+  const live=it.status==='live';let pi=0;
+  $('#view').innerHTML=`${demoNote()}<a class="back" href="#/">← 回去逛</a><div class="item">
+  <div class="gal"><img id="gimg" src="${esc(cover(it))}" alt="${esc(it.title)}">${it.photos.length>1?`<div class="thumbs">${it.photos.map((_,i)=>`<button type="button" data-i="${i}" aria-label="第 ${i+1} 張" aria-pressed="${i===0}"></button>`).join('')}</div>`:''}<span class="blurnote" id="bn" hidden>越接近結束越清楚</span></div>
+  <h1>${esc(it.title)}</h1><div class="meta">${esc(it.cond)}・${esc(it.area||'不限地區')}・${esc(it.ship)}</div>
+  <div class="board"><div class="row1"><div><span class="now" id="nowlbl">${live?'現在':'成交價'}</span><span class="price" id="bigp"></span></div><div class="next" id="next"></div></div>
+  ${live?`<div class="track"><i id="trk"></i></div><div class="legend"><span>開價 ${money(it.start_price)}</span><span>底價不公開</span></div>`:''}
+  <div class="live" id="livebar"></div>
+  <button class="grab" id="grab" type="button"></button></div>
+  ${it.story?`<div class="story"><span>為什麼不用了</span>${esc(it.story)}</div>`:''}
+  <dl class="facts"><dt>開價</dt><dd>${money(it.start_price)}</dd>${it.new_price?`<dt>新品價</dt><dd>${money(it.new_price)}</dd>`:''}<dt>降價</dt><dd>每 ${it.interval_min} 分鐘降 ${money(it.step)}</dd><dt>結束</dt><dd>${new Date(it.end_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} 前降到底價</dd></dl>
+  <a class="aff" href="${shopee(it.title)}" target="_blank" rel="noopener sponsored"><span>想買全新的？看蝦皮現在賣多少</span><b>比價 →</b></a>
+  <div class="tools"><button class="btn dark" id="share" type="button">分享給朋友</button><button class="btn ghost" id="rep" type="button">檢舉</button></div></div>`;
+  const g=$('.gal .thumbs');if(g)g.onclick=e=>{const b=e.target.closest('button');if(!b)return;pi=+b.dataset.i;$('#gimg').src=it.photos[pi];g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))};
+  let lastP=null;
+  const tick=()=>{const now=Date.now(),early=live&&now<Date.parse(it.start_at),p=!live?it.sold_price:early?it.start_price:it._atFloor?it._price:Math.max(it._floor??1,priceAt(it));
+    const bp=$('#bigp');if(!bp)return;bp.textContent=money(p);if(lastP!==null&&p!==lastP){bp.classList.remove('tick');void bp.offsetWidth;bp.classList.add('tick')}lastP=p;
+    const bl=early?7:blurOf(it);$('#gimg').style.filter=`blur(${bl}px)`;$('#bn').hidden=!bl;
+    if(live){const tot=it.start_price-(it._floor??Math.max(1,it.start_price-it.step*Math.floor((Date.parse(it.end_at)-Date.parse(it.start_at))/MIN/it.interval_min)));$('#trk').style.width=Math.min(100,Math.max(0,(it.start_price-p)/Math.max(1,tot)*100))+'%'}
+    $('#next').innerHTML=!live?`${ago(it.sold_at)}被搶走`:early?`開賣倒數<b>${fmtLeft(Date.parse(it.start_at)-now)}</b>`:it._atFloor?'<b>已到底價</b>不會再降':`下次降價<b>${fmtLeft(nextDropIn(it))}</b>`;
+    const gb=$('#grab');gb.disabled=!live||early;gb.innerHTML=!live?'已經被搶走了':early?'還沒開賣':`我要了<span class="price">${money(p)}</span>`;
+    if(live&&!early&&!it._atFloor&&nextDropIn(it)<1100)setTimeout(async()=>{await refresh();const n=items.find(i=>i.id===id);if(n)Object.assign(it,n)},1500)};
+  tick();timer=setInterval(tick,1000);
+  const lb=$('#livebar');lb.innerHTML=live?`<span><span class="dot"></span><b id="vw">—</b> 人在看</span>`:'';
+  if(live&&api.live)stopRoom=api.presence(id,n=>{const v=$('#vw');if(v)v.textContent=n});else if(live)lb.innerHTML='<span>上線後會顯示即時在看人數</span>';
+  $('#grab').onclick=()=>openClaim(it);
+  $('#share').onclick=()=>{const p=it.status==='live'?Math.max(it._floor??1,priceAt(it)):it.sold_price;const t=`${it.title} 現在 ${money(p)}，還在掉。你敢等嗎？\n${SITE}#/i/${it.id}`;
+    if(navigator.share)navigator.share({text:t}).catch(()=>{});else navigator.clipboard?.writeText(t).then(()=>toast('已複製，貼給朋友'))};
+  $('#rep').onclick=async()=>{if(!confirm('確定檢舉這件？三個人檢舉就會自動下架。'))return;await api.report(id);toast('收到，謝謝')}}
+
+function openClaim(it){const p=Math.max(it._floor??1,priceAt(it));const saved=LS.get('dj_buyer',{});
+  const v=document.createElement('div');v.className='veil';v.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-label="確認購買">
+  <h3>確定用這個價格帶走？</h3><div class="big">${money(p)}</div><p style="margin:0;color:var(--muted);font-size:14px">按下去就成交，其他人就買不到了。賣家會用你留的聯絡方式開賣貨便單或約面交。</p>
+  <div class="f"><label for="bn1">怎麼稱呼你</label><input id="bn1" maxlength="20" value="${esc(saved.n||'')}"></div>
+  <div class="f"><label for="bc1">聯絡方式</label><input id="bc1" maxlength="60" placeholder="LINE ID 或手機" value="${esc(saved.c||'')}"><small>只有這件的賣家看得到。</small></div>
+  <button class="grab" id="go" type="button">確定，我要了</button><button class="btn ghost" id="no" type="button">再想想</button></div>`;
+  document.body.appendChild(v);const close=()=>v.remove();v.onclick=e=>{if(e.target===v)close()};v.querySelector('#no').onclick=close;
+  v.querySelector('#go').onclick=async()=>{const n=v.querySelector('#bn1').value.trim(),c=v.querySelector('#bc1').value.trim();if(c.length<2){toast('留一個聯絡方式，賣家才找得到你');return}
+    LS.set('dj_buyer',{n,c});const b=v.querySelector('#go');b.disabled=true;b.textContent='搶購中…';
+    try{const r=await api.claim(it.id,n,c);await refresh();v.querySelector('.sheet').innerHTML=`<h3>搶到了！</h3><div class="big">${money(r.price)}</div><div class="got">賣家聯絡方式：<b>${esc(r.seller_contact)}</b><br>交易方式：${esc(r.ship)}</div><p style="margin:0;font-size:14px;color:var(--muted)">主動傳訊息給賣家，說你在掉價中買了「${esc(it.title)}」。賣家也看得到你的聯絡方式。這筆紀錄會留在「我的」。</p><button class="btn dark" id="ok" type="button">好</button>`;v.querySelector('#ok').onclick=()=>{close();render()}}
+    catch(e){const m=e.message;toast(m==='gone'?'慢了一步，被別人搶走了':m==='own'?'這是你自己上架的':m==='limit'?'24 小時內最多搶 3 件':m==='early'?'還沒開賣':'沒搶成，再試一次');b.disabled=false;b.textContent='確定，我要了';if(m==='gone'){await refresh();close();render()}}}}
+
+/* ---------- sell ---------- */
+async function shrink(file){const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(file)});
+  const S=1200,k=Math.min(1,S/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  let q=.82,b;do{b=await new Promise(r=>c.toBlob(r,'image/jpeg',q));q-=.1}while(b.size>900000&&q>.3);return b}
+function viewSell(){const d=LS.get('dj_draft',{});let files=[];
+  const s={iv:d.iv||10,hrs:d.hrs||24,when:'now'};
+  $('#view').innerHTML=`${demoNote()}<h1 style="margin:4px 0 4px;font-size:26px;font-weight:900">上架一件</h1><p style="margin:0 0 18px;color:var(--muted)">設好開價和底價，時間一到它會自己往下掉。</p>
+  <form class="form" id="sf" novalidate>
+   <div class="f"><label>照片（最多 3 張）</label><div class="photos" id="pics"><label class="add" for="file">＋ 加照片</label></div><input id="file" type="file" accept="image/*" multiple hidden></div>
+   <div class="f"><label for="t">東西名稱</label><input id="t" maxlength="40" placeholder="例如 AirPods Pro 第二代" value="${esc(d.t||'')}"></div>
+   <div class="f"><label for="st">為什麼不用了</label><textarea id="st" maxlength="300" placeholder="一兩句就好。說實話最好賣，例如「買了只用三次」">${esc(d.st||'')}</textarea></div>
+   <div class="two"><div class="f"><label for="cd">狀況</label><select id="cd">${['全新','近全新','良好','使用過','有瑕疵'].map(x=>`<option${x===(d.cd||'良好')?' selected':''}>${x}</option>`).join('')}</select></div><div class="f"><label for="np">新品價（選填）</label><input id="np" type="number" inputmode="numeric" min="1" value="${d.np||''}"></div></div>
+   <div class="two"><div class="f"><label for="sp">開價</label><input id="sp" type="number" inputmode="numeric" min="10" value="${d.sp||''}"></div><div class="f"><label for="fp">底價（不公開）</label><input id="fp" type="number" inputmode="numeric" min="1" value="${d.fp||''}"><small>最低願意賣多少，降到這裡就停。</small></div></div>
+   <div class="f"><label>多久降一次</label><div class="chips" id="ivc">${[10,30,60].map(v=>`<button type="button" class="chip" data-v="${v}" aria-pressed="${v===s.iv}">${v} 分鐘</button>`).join('')}</div></div>
+   <div class="f"><label>多久降到底價</label><div class="chips" id="hrc">${[3,6,12,24,48].map(v=>`<button type="button" class="chip" data-v="${v}" aria-pressed="${v===s.hrs}">${v} 小時</button>`).join('')}</div></div>
+   <div class="f"><label>什麼時候開賣</label><div class="chips" id="whc"><button type="button" class="chip" data-v="now" aria-pressed="true">馬上</button><button type="button" class="chip" data-v="later" aria-pressed="false">指定時間</button></div><input id="at" type="datetime-local" hidden style="margin-top:8px"><small>指定晚上 9 點這種大家有空的時間，搶的人最多。</small></div>
+   <div class="preview" id="pv"></div>
+   <div class="two"><div class="f"><label for="ar">所在地區</label><input id="ar" maxlength="12" placeholder="例如 台北大安" value="${esc(d.ar||'')}"></div><div class="f"><label for="sh">交易方式</label><select id="sh">${['賣貨便','面交','賣貨便或面交'].map(x=>`<option${x===(d.sh||'賣貨便')?' selected':''}>${x}</option>`).join('')}</select></div></div>
+   <div class="f"><label for="ct">你的聯絡方式</label><input id="ct" maxlength="100" placeholder="LINE ID、IG 或賣貨便賣場連結" value="${esc(d.ct||'')}"><small>只有搶到的人看得到。</small></div>
+   <div class="rules"><b>不能上架：</b><ul><li>藥品、保健食品、菸酒、隱形眼鏡</li><li>活體動物、武器、仿冒品、盜版</li><li>帳號、點數、票券轉售加價、任何違法物品</li></ul>被三個人檢舉會自動下架。</div>
+   <label class="check"><input type="checkbox" id="agree"> 這是我自己的東西，照片和描述都是真的，成交後會出貨。</label>
+   <button class="submit" id="sb" type="submit">開始掉價</button>
+  </form>`;
+  const pics=$('#pics'),drawPics=()=>{pics.querySelectorAll('.pv').forEach(x=>x.remove());files.forEach((f,i)=>{const d=document.createElement('div');d.className='pv';d.innerHTML=`<img src="${URL.createObjectURL(f)}" alt=""><button type="button" aria-label="移除">×</button>`;d.querySelector('button').onclick=()=>{files.splice(i,1);drawPics()};pics.insertBefore(d,pics.querySelector('.add'))});pics.querySelector('.add').hidden=files.length>=3};
+  $('#file').onchange=async e=>{for(const f of [...e.target.files].slice(0,3-files.length)){try{files.push(await shrink(f))}catch(x){toast('這張照片讀不到')}}e.target.value='';drawPics()};
+  const chips=(id,key)=>$(id).onclick=e=>{const b=e.target.closest('.chip');if(!b)return;s[key]=key==='when'?b.dataset.v:+b.dataset.v;$(id).querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));if(key==='when')$('#at').hidden=s.when!=='later';pv()};
+  chips('#ivc','iv');chips('#hrc','hrs');chips('#whc','when');
+  const n=id=>Math.round(+$(id).value||0);
+  const pv=()=>{const sp=n('#sp'),fp=n('#fp'),steps=Math.max(1,Math.floor(s.hrs*60/s.iv)),st=Math.max(1,Math.ceil((sp-fp)/steps));
+    LS.set('dj_draft',{t:$('#t').value,st:$('#st').value,cd:$('#cd').value,np:$('#np').value,sp:$('#sp').value,fp:$('#fp').value,ar:$('#ar').value,sh:$('#sh').value,ct:$('#ct').value,iv:s.iv,hrs:s.hrs});
+    $('#pv').innerHTML=sp>fp&&fp>0?`從 <b>${money(sp)}</b> 開始，每 ${s.iv} 分鐘降 <b>${money(st)}</b>，${s.hrs} 小時後到底價 ${money(fp)}。<br><span style="color:var(--muted);font-size:13px">大家只看得到開價和每次降多少，看不到底價。</span>`:'<span style="color:var(--muted)">填好開價和底價，這裡會顯示它怎麼掉。</span>'};
+  $('#sf').oninput=pv;pv();
+  $('#sf').onsubmit=async e=>{e.preventDefault();const sp=n('#sp'),fp=n('#fp'),t=$('#t').value.trim(),ct=$('#ct').value.trim();
+    const bad=!files.length?'至少放一張照片':t.length<2?'寫一下東西名稱':!(sp>=10)?'開價至少 $10':!(fp>=1&&fp<sp)?'底價要比開價低':ct.length<2?'留個聯絡方式，買家才找得到你':!$('#agree').checked?'勾選最下面的確認':'';
+    if(bad){toast(bad);return}
+    let at=new Date();if(s.when==='later'){const v=$('#at').value;if(!v){toast('選一個開賣時間');return}at=new Date(v);if(at<new Date()){toast('開賣時間要在現在之後');return}}
+    const b=$('#sb');b.disabled=true;b.textContent='上架中…';
+    try{const id=await api.create({title:t,story:$('#st').value.trim(),cond:$('#cd').value,new_price:n('#np')||null,start_price:sp,floor_price:fp,interval_min:s.iv,hours:s.hrs,start_at:at.toISOString(),area:$('#ar').value.trim(),ship:$('#sh').value,seller_contact:ct},files);
+      LS.set('dj_draft',{ct,ar:$('#ar').value,sh:$('#sh').value});await refresh();toast('上架了，開始掉價');location.hash='#/i/'+id}
+    catch(x){toast(x.message==='too_many'?'同時最多 5 件在掉價':'上架失敗，再試一次');b.disabled=false;b.textContent='開始掉價'}}}
+
+/* ---------- me ---------- */
+async function viewMe(){$('#view').innerHTML=`${demoNote()}<h1 style="margin:4px 0 14px;font-size:26px;font-weight:900">我的</h1><div id="mine" class="mine"><div class="empty">讀取中…</div></div>`;
+  let rows=[];try{rows=await api.mine()}catch(e){$('#mine').innerHTML='<div class="empty">讀取失敗</div>';return}
+  const sells=rows.filter(r=>r.role==='sell'),buys=rows.filter(r=>r.role==='buy');
+  const row=r=>{const img=r.photos?.[0]||'';if(r.role==='buy')return`<div class="mi"><img src="${esc(img)}" alt=""><div><h3>${esc(r.title)}</h3><p>你用 ${money(r.sold_price)} 搶到・${ago(r.sold_at)}</p><p>賣家：<span class="ct">${esc(r.other_contact)}</span></p></div></div>`;
+    const st=r.status==='live'?`掉價中・底價 ${money(r.floor_price)}`:r.status==='sold'?`${money(r.sold_price)} 成交・${ago(r.sold_at)}`:'已下架';
+    return`<div class="mi"><img src="${esc(img)}" alt=""><div><h3>${esc(r.title)}</h3><p>${st}</p>${r.status==='sold'?`<p>買家 ${esc(r.other_name||'')}：<span class="ct">${esc(r.other_contact||'')}</span></p>`:''}<div class="tools">${r.status==='live'?`<a class="btn" href="#/i/${r.id}">看看</a><button class="btn ghost" data-rm="${r.id}" type="button">下架</button>`:''}${r.status==='sold'?`<button class="btn ghost" data-re="${r.id}" type="button">買家跑了，重新掉價</button>`:''}</div></div></div>`};
+  $('#mine').innerHTML=`<div class="sec" style="margin-top:0"><h2>我上架的</h2><small>${sells.length} 件</small></div>${sells.length?sells.map(row).join(''):'<div class="empty">還沒上架東西。<a href="#/sell">上架一件</a></div>'}
+  <div class="sec"><h2>我搶到的</h2><small>${buys.length} 件</small></div>${buys.length?buys.map(row).join(''):'<div class="empty">還沒搶到東西。</div>'}`;
+  $('#mine').onclick=async e=>{const a=e.target.closest('[data-rm]'),b=e.target.closest('[data-re]');if(a&&confirm('確定下架？')){await api.remove(a.dataset.rm);await refresh();viewMe()}if(b&&confirm('重新從開價開始掉？')){await api.relist(b.dataset.re);await refresh();viewMe()}}}
+
+await refresh();render();
+</script>
+</body>
+</html>
