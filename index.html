@@ -10,6 +10,14 @@
 <meta property="og:image" content="https://onlyhandrubbing.github.io/diaojia/og.png">
 <meta property="og:url" content="https://onlyhandrubbing.github.io/diaojia/">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#151515">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="掉價中">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Barlow+Condensed:wght@600;700;800&display=swap">
@@ -148,6 +156,13 @@ main{padding-block:18px 80px}
 .how{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
 .how div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;color:var(--muted)}
 .how b{display:block;color:var(--ink);font-size:14.5px}
+.inst{display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.inst img{width:42px;height:42px;border-radius:10px;flex:none}
+.inst div{flex:1;font-size:13.5px;line-height:1.5}
+.inst b{display:block;font-size:15px}
+.inst button{border:0;border-radius:999px;padding:7px 14px;font-weight:700;cursor:pointer;background:var(--hot);color:#fff;white-space:nowrap}
+.inst .x{background:transparent;color:var(--bg);opacity:.6;padding:4px 6px;font-size:18px}
+.watchon{border-color:var(--hot)!important;color:var(--hot)!important}
 .fine{margin-top:36px;font-size:12px;color:var(--muted);line-height:1.8}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -247,18 +262,60 @@ const demoNote=()=>api.live?'':'<div class="demo">示範模式：資料只存在
 const cover=it=>it.photos?.[0]||ph(it.title.slice(0,4),200);
 const blurOf=it=>{const tot=Date.parse(it.end_at)-Date.parse(it.start_at),el=Date.now()-Date.parse(it.start_at);return it.status!=='live'?0:Math.max(0,Math.round(6*(1-Math.min(1,Math.max(0,el/tot)))))};
 
+/* ---------- install as app ---------- */
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(route().r==='home')render()});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+function installBanner(){if(standalone||LS.get('dj_inst_x',0)>Date.now())return'';
+  if(deferredPrompt)return`<div class="inst"><img src="icon-192.png" alt=""><div><b>裝到手機主畫面</b>像 App 一樣一鍵打開，降價會通知你。</div><button id="instBtn" type="button">安裝</button><button class="x" id="instX" type="button" aria-label="關閉">×</button></div>`;
+  if(isIOS)return`<div class="inst"><img src="icon-192.png" alt=""><div><b>裝到 iPhone 主畫面</b>用 Safari 點下方「分享」→「加入主畫面」，就能像 App 一樣用、收到降價通知。</div><button class="x" id="instX" type="button" aria-label="關閉">×</button></div>`;
+  return''}
+function bindInstall(){const b=document.getElementById('instBtn');if(b)b.onclick=async()=>{deferredPrompt.prompt();await deferredPrompt.userChoice.catch(()=>{});deferredPrompt=null;render()};
+  const x=document.getElementById('instX');if(x)x.onclick=()=>{LS.set('dj_inst_x',Date.now()+7*864e5);render()}}
+
+/* ---------- watch list + notifications (while the app is open; closed-app push needs the backend) ---------- */
+let watch=LS.get('dj_watch',{});
+const saveWatch=()=>LS.set('dj_watch',watch);
+async function notify(title,body,url){try{if(Notification.permission!=='granted')throw 0;const r=await navigator.serviceWorker?.ready;if(r)await r.showNotification(title,{body,icon:'icon-192.png',badge:'icon-192.png',data:{url},tag:url});else new Notification(title,{body,icon:'icon-192.png'})}catch(e){toast(title+'：'+body)}}
+function checkWatch(){const now=Date.now();let ch=false;
+  for(const[id,w]of Object.entries(watch)){const it=items.find(i=>i.id===id);if(!it){delete watch[id];ch=true;continue}const url=SITE+'#/i/'+id;
+    if(it.status==='sold'){if(!w.soldSeen){notify('被搶走了',`${it.title} 被人用 ${money(it.sold_price)} 帶走。`,url);w.soldSeen=1;ch=true}continue}
+    if(it.status!=='live')continue;
+    if(now<Date.parse(it.start_at))continue;
+    if(w.start&&!w.startSeen){notify('開賣了',`${it.title} 開始掉價，現在 ${money(it._price??priceAt(it))}`,url);w.startSeen=1;ch=true}
+    const p=it._atFloor?it._price:Math.max(it._floor??1,priceAt(it));
+    if(w.target&&p<=w.target&&!w.hit){notify('降到你要的價格了',`${it.title} 現在 ${money(p)}，快去搶`,url);w.hit=1;ch=true}}
+  if(ch)saveWatch()}
+setInterval(checkWatch,20000);
+function openWatch(it){const early=Date.now()<Date.parse(it.start_at),p=Math.max(it._floor??1,priceAt(it)),w=watch[it.id]||{};
+  const v=document.createElement('div');v.className='veil';v.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-label="關注">
+  <h3>${early?'開賣時叫我':'降到多少叫我'}</h3>
+  ${early?'':`<div class="f"><label for="wt">降到這個價格就通知我</label><input id="wt" type="number" inputmode="numeric" min="1" value="${w.target||Math.max(1,Math.round(p*0.8/10)*10)}"><small>現在 ${money(p)}，每 ${it.interval_min} 分鐘降 ${money(it.step)}。</small></div>`}
+  <p style="margin:0;font-size:13.5px;color:var(--muted)">${standalone?'App 開著或在背景時會通知你。':'裝到主畫面效果最好。'}被別人搶走時也會告訴你。</p>
+  <button class="grab" id="wok" type="button">好，盯著它</button>${watch[it.id]?'<button class="btn ghost" id="wdel" type="button">不關注了</button>':''}</div>`;
+  document.body.appendChild(v);const close=()=>v.remove();v.onclick=e=>{if(e.target===v)close()};
+  v.querySelector('#wok').onclick=async()=>{const t=early?null:Math.round(+v.querySelector('#wt').value||0);if(!early&&!(t>0)){toast('填一個價格');return}if(!early&&t>=p){toast('要比現在的 '+money(p)+' 低');return}
+    if('Notification' in window&&Notification.permission==='default'){try{await Notification.requestPermission()}catch(e){}}
+    watch[it.id]={target:t,start:early?1:0};saveWatch();close();toast(early?'開賣時會叫你':`降到 ${money(t)} 會叫你`);render()};
+  const d=v.querySelector('#wdel');if(d)d.onclick=()=>{delete watch[it.id];saveWatch();close();render()}}
+
 /* ---------- home ---------- */
 function tile(it){const live=it.status==='live',early=live&&Date.now()<Date.parse(it.start_at),p=live?(it._price??priceAt(it)):it.sold_price;
   const badge=!live?`<span class="badge">${money(it.sold_price)} 被搶走</span>`:early?`<span class="badge">${new Date(it.start_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} 開賣</span>`:it._atFloor?'<span class="badge hot">已到底價</span>':'';
   return`<a class="tile ${live?'':'sold'}" href="#/i/${it.id}"><div class="ph"><img src="${esc(cover(it))}" alt="" loading="lazy" style="filter:blur(${early?7:blurOf(it)}px)"></div>${badge}<div class="b"><h3>${esc(it.title)}</h3><div class="p"><span class="price" data-pid="${it.id}">${money(early?it.start_price:p)}</span>${it.new_price?`<span class="was">${money(it.new_price)}</span>`:''}</div><div class="t" data-tid="${it.id}">${live&&!early&&!it._atFloor?'下次降價 '+fmtLeft(nextDropIn(it)):live&&early?'開賣價':ago(it.sold_at)}</div></div></a>`}
 function viewHome(){const now=Date.now(),live=items.filter(i=>i.status==='live'&&Date.parse(i.start_at)<=now),soon=items.filter(i=>i.status==='live'&&Date.parse(i.start_at)>now),sold=items.filter(i=>i.status==='sold').sort((a,b)=>Date.parse(b.sold_at)-Date.parse(a.sold_at)).slice(0,8);
-  $('#view').innerHTML=`${demoNote()}<div class="hero"><h1>越等越便宜，<br>但可能被搶走。</h1><p>每件東西時間一到就自動降價，誰先按「我要了」就用當下的價格帶走。</p>
+  const wl=items.filter(i=>watch[i.id]&&i.status==='live');
+  $('#view').innerHTML=`${demoNote()}${installBanner()}<div class="hero"><h1>越等越便宜，<br>但可能被搶走。</h1><p>每件東西時間一到就自動降價，誰先按「我要了」就用當下的價格帶走。</p>
   <div class="how"><div><b>一直掉價</b>每 10～60 分鐘降一次</div><div><b>先按先得</b>一按就結束，沒有第二次</div><div><b>照片會變清楚</b>越接近結束越看得清</div></div></div>
+  ${wl.length?`<div class="sec"><h2>你在盯的</h2><small>${wl.length} 件</small></div><div class="grid">${wl.map(tile).join('')}</div>`:''}
   <div class="sec"><h2>正在掉價</h2><small>${live.length} 件</small></div>${live.length?`<div class="grid">${live.map(tile).join('')}</div>`:'<div class="empty">現在沒有在掉價的東西。<br><a href="#/sell">上架一件</a>，你就是第一個。</div>'}
   ${soon.length?`<div class="sec"><h2>即將開賣</h2><small>先看好</small></div><div class="grid">${soon.map(tile).join('')}</div>`:''}
   ${sold.length?`<div class="sec"><h2>剛被搶走</h2><small>別人用多少帶走</small></div><div class="feed">${sold.map(i=>`<div><span>${esc(i.title)}<br><small style="color:var(--muted)">${ago(i.sold_at)}・開價 ${money(i.start_price)}</small></span><span class="price">${money(i.sold_price)}</span></div>`).join('')}</div>`:''}
   <p class="fine">掉價中只提供上架和配對，不經手金流。買賣雙方自行用 7-11 賣貨便或面交完成交易，請注意交易安全，不要先匯款給不認識的人。商品旁的「蝦皮新品價」為推薦連結，透過連結購買站長可能獲得分潤。</p>`;
-  timer=setInterval(()=>{for(const it of live){const p=document.querySelector(`[data-pid="${it.id}"]`),t=document.querySelector(`[data-tid="${it.id}"]`);if(!p)continue;if(!it._atFloor){const np=Math.max(it._floor??1,priceAt(it));p.textContent=money(np);if(t)t.textContent='下次降價 '+fmtLeft(nextDropIn(it))}}},1000)}
+  bindInstall();
+  timer=setInterval(()=>{for(const it of [...live,...wl]){const p=document.querySelector(`[data-pid="${it.id}"]`),t=document.querySelector(`[data-tid="${it.id}"]`);if(!p)continue;if(!it._atFloor){const np=Math.max(it._floor??1,priceAt(it));p.textContent=money(np);if(t)t.textContent='下次降價 '+fmtLeft(nextDropIn(it))}}},1000)}
 
 /* ---------- item ---------- */
 function viewItem(id){const it=items.find(i=>i.id===id);if(!it){$('#view').innerHTML='<a class="back" href="#/">← 回去逛</a><div class="empty">找不到這件，可能已經下架了。</div>';return}
@@ -273,7 +330,7 @@ function viewItem(id){const it=items.find(i=>i.id===id);if(!it){$('#view').inner
   ${it.story?`<div class="story"><span>為什麼不用了</span>${esc(it.story)}</div>`:''}
   <dl class="facts"><dt>開價</dt><dd>${money(it.start_price)}</dd>${it.new_price?`<dt>新品價</dt><dd>${money(it.new_price)}</dd>`:''}<dt>降價</dt><dd>每 ${it.interval_min} 分鐘降 ${money(it.step)}</dd><dt>結束</dt><dd>${new Date(it.end_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} 前降到底價</dd></dl>
   <a class="aff" href="${shopee(it.title)}" target="_blank" rel="noopener sponsored"><span>想買全新的？看蝦皮現在賣多少</span><b>比價 →</b></a>
-  <div class="tools"><button class="btn dark" id="share" type="button">分享給朋友</button><button class="btn ghost" id="rep" type="button">檢舉</button></div></div>`;
+  <div class="tools">${live?`<button class="btn ${watch[it.id]?'watchon':''}" id="watch" type="button">${watch[it.id]?(watch[it.id].target?'盯著：降到 '+money(watch[it.id].target):'開賣會叫我'):(Date.now()<Date.parse(it.start_at)?'開賣時叫我':'降到多少叫我')}</button>`:''}<button class="btn dark" id="share" type="button">分享給朋友</button><button class="btn ghost" id="rep" type="button">檢舉</button></div></div>`;
   const g=$('.gal .thumbs');if(g)g.onclick=e=>{const b=e.target.closest('button');if(!b)return;pi=+b.dataset.i;$('#gimg').src=it.photos[pi];g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))};
   let lastP=null;
   const tick=()=>{const now=Date.now(),early=live&&now<Date.parse(it.start_at),p=!live?it.sold_price:early?it.start_price:it._atFloor?it._price:Math.max(it._floor??1,priceAt(it));
@@ -287,6 +344,7 @@ function viewItem(id){const it=items.find(i=>i.id===id);if(!it){$('#view').inner
   const lb=$('#livebar');lb.innerHTML=live?`<span><span class="dot"></span><b id="vw">—</b> 人在看</span>`:'';
   if(live&&api.live)stopRoom=api.presence(id,n=>{const v=$('#vw');if(v)v.textContent=n});else if(live)lb.innerHTML='<span>上線後會顯示即時在看人數</span>';
   $('#grab').onclick=()=>openClaim(it);
+  const wb=$('#watch');if(wb)wb.onclick=()=>openWatch(it);
   $('#share').onclick=()=>{const p=it.status==='live'?Math.max(it._floor??1,priceAt(it)):it.sold_price;const t=`${it.title} 現在 ${money(p)}，還在掉。你敢等嗎？\n${SITE}#/i/${it.id}`;
     if(navigator.share)navigator.share({text:t}).catch(()=>{});else navigator.clipboard?.writeText(t).then(()=>toast('已複製，貼給朋友'))};
   $('#rep').onclick=async()=>{if(!confirm('確定檢舉這件？三個人檢舉就會自動下架。'))return;await api.report(id);toast('收到，謝謝')}}
@@ -355,7 +413,7 @@ async function viewMe(){$('#view').innerHTML=`${demoNote()}<h1 style="margin:4px
   <div class="sec"><h2>我搶到的</h2><small>${buys.length} 件</small></div>${buys.length?buys.map(row).join(''):'<div class="empty">還沒搶到東西。</div>'}`;
   $('#mine').onclick=async e=>{const a=e.target.closest('[data-rm]'),b=e.target.closest('[data-re]');if(a&&confirm('確定下架？')){await api.remove(a.dataset.rm);await refresh();viewMe()}if(b&&confirm('重新從開價開始掉？')){await api.relist(b.dataset.re);await refresh();viewMe()}}}
 
-await refresh();render();
+await refresh();render();checkWatch();
 </script>
 </body>
 </html>
